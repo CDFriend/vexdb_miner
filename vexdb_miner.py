@@ -4,6 +4,7 @@ import os
 import sqlite3
 import sys
 import requests
+import vexdb_api
 
 
 def main():
@@ -14,39 +15,21 @@ def main():
         conn = sqlite3.connect("vexdb_data.sqlite")
 
     # get number of available teams
-    teams_url = "https://api.vexdb.io/v1/get_teams"
-    resp = requests.get(teams_url, {"nodata": "true", "program": "VRC"})
-    num_teams = int(resp.json()["size"])
+    num_teams = vexdb_api.get_num_teams("VRC")
     print "Found %d teams." % num_teams
 
     # get teams 1,000 entries at a time (VexDB tends to limit at around 5,000)
     teamnum = 0
-    print "Getting VRC teams data from: " + teams_url
+    print "Getting VRC teams data from: " + vexdb_api.API_BASE_URL
     while teamnum < num_teams:
         # get team data (VEX Robotics Competition only) from vexdb.io
-        resp = requests.get(teams_url, {"program": "VRC", "limit_start": teamnum, "limit_number": 1000})
-
-        # parse JSON data from request
-        resp_data = resp.json()
-        sys.stdout.write("\r %d%%" % int((float(teamnum) / num_teams) * 100))
-
-        # prepare data and add to database
-        team_data = [
-            (
-                 team["number"],
-                 team["team_name"],
-                 team["robot_name"],
-                 team["organisation"],
-                 team["city"],
-                 team["country"],
-                 team["region"],
-                 team["grade"]
-            )
-            for team in resp_data["result"]
-        ]
+        team_data = vexdb_api.get_teams("VRC", teamnum, 1000)
 
         conn.executemany("INSERT OR REPLACE INTO data_teams VALUES (?, ?, ?, ?, ?, ?, ?, ?);", team_data)
-        teamnum += resp_data["size"]
+
+        # update progress
+        sys.stdout.write("\r %d%%" % int((float(teamnum) / num_teams) * 100))
+        teamnum += 1000
 
     sys.stdout.write("\r100%\n")
 
