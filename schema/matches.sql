@@ -17,3 +17,5 @@ CREATE TABLE data_matches (
     blue_score INTEGER NOT NULL,        -- Final score for blue
     date_time STRING NOT NULL           -- Scheduled date/time for the match (ISO 8601)
 );
+
+CREATE INDEX ind_eventsmatches ON data_matches(event_sku);
