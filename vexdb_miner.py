@@ -2,6 +2,7 @@ __author__ = "Charlie Friend <charles.d.friend@gmail.com>"
 
 import os
 import sqlite3
+import sys
 import requests
 
 
@@ -20,14 +21,14 @@ def main():
 
     # get teams 1,000 entries at a time (VexDB tends to limit at around 5,000)
     teamnum = 0
+    print "Getting VRC teams data from: " + teams_url
     while teamnum < num_teams:
         # get team data (VEX Robotics Competition only) from vexdb.io
-        print "Getting VRC teams data from: " + teams_url
         resp = requests.get(teams_url, {"program": "VRC", "limit_start": teamnum, "limit_number": 1000})
 
         # parse JSON data from request
         resp_data = resp.json()
-        print "Found %d teams." % num_teams
+        sys.stdout.write("\r %d%%" % int((float(teamnum) / num_teams) * 100))
 
         # prepare data and add to database
         team_data = [
@@ -46,6 +47,8 @@ def main():
 
         conn.executemany("INSERT OR REPLACE INTO data_teams VALUES (?, ?, ?, ?, ?, ?, ?, ?);", team_data)
         teamnum += resp_data["size"]
+
+    sys.stdout.write("\r100%\n")
 
     conn.commit()
 
