@@ -25,6 +25,8 @@ def get_teams(program):
     num_teams = get_num_teams(program)
     print "Found %d teams" % num_teams
 
+    print "Getting team data from: " + API_BASE_URL + "/get_teams"
+
     team_data = []
 
     # get teams 1000 at a time (otherwise VexDB will truncate the list)
@@ -54,6 +56,8 @@ def get_teams(program):
 
         sys.stdout.write("\r%d%%" % (ind / float(num_teams) * 100))
         ind += 1000
+
+    sys.stdout.write("\r100%\n")
 
     return team_data
 
