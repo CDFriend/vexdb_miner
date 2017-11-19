@@ -17,6 +17,10 @@ def main():
     team_data = vexdb_api.get_teams("VRC")
     conn.executemany("INSERT OR REPLACE INTO data_teams VALUES (?, ?, ?, ?, ?, ?, ?, ?);", team_data)
 
+    # get event data
+    event_data = vexdb_api.get_events("VRC", "In The Zone")
+    conn.executemany("INSERT OR REPLACE INTO data_events VALUES (?, ?, ?, ?, ?, ?, ?, ?);", event_data)
+
     conn.commit()
 
 
