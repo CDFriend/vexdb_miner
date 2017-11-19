@@ -106,3 +106,52 @@ def get_events(program, game):
 
     sys.stdout.write("\r100%\n")
     return event_data
+
+
+def get_num_matches(program, game):
+    """ Get the number of events on VexDB for a given program (VRC or VexU) and game. """
+    resp = requests.get(API_BASE_URL + "/get_matches", {"nodata": "true", "program": program, "season": game})
+    return int(resp.json()["size"])
+
+def get_matches(program, game):
+    ind = 0
+    num_matches = get_num_matches(program, game)
+    print "Found %d matches" % num_matches
+
+    print "Getting match data from: " + API_BASE_URL + "/get_matches"
+
+    match_data = []
+
+    while ind < num_matches:
+        resp = requests.get(API_BASE_URL + "/get_matches",
+                            {
+                                "program": program,
+                                "limit_start": ind,
+                                "limit_number": 1000
+                            })
+
+        resp_data = resp.json()
+
+        match_data.extend([
+            (
+                match["sku"],
+                match["red1"],
+                match["red2"],
+                match["red3"],
+                match["redsit"],
+                match["blue1"],
+                match["blue2"],
+                match["blue3"],
+                match["bluesit"],
+                match["redscore"],
+                match["bluescore"],
+                match["scheduled"]
+            )
+            for match in resp_data["result"]
+        ])
+
+        sys.stdout.write("\r%d%%" % (ind / float(num_matches) * 100))
+        ind += 1000
+
+    sys.stdout.write("\r100%\n")
+    return match_data

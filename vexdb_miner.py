@@ -21,6 +21,10 @@ def main():
     event_data = vexdb_api.get_events("VRC", "In The Zone")
     conn.executemany("INSERT OR REPLACE INTO data_events VALUES (?, ?, ?, ?, ?, ?, ?, ?);", event_data)
 
+    # get match data
+    match_data = vexdb_api.get_matches("VRC", "In The Zone")
+    conn.executemany("INSERT OR REPLACE INTO data_matches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", match_data)
+
     conn.commit()
 
 
@@ -35,13 +39,14 @@ def create_new_db():
 
     _read_sql_file(conn, "schema/teams.sql")
     _read_sql_file(conn, "schema/events.sql")
+    _read_sql_file(conn, "schema/matches.sql")
 
     return conn
 
 
 def _read_sql_file(conn, filename):
     """ Executes all statements in an SQL script. """
-    with open(filename, 'rw') as file:
+    with open(filename, 'rb') as file:
         for line in file.read().split(";"):
             conn.execute(line)
 
