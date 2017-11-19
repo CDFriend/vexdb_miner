@@ -12,37 +12,41 @@ def main():
     else:
         conn = sqlite3.connect("vexdb_data.sqlite")
 
-    # get team data (VEX Robotics Competition only) from vexdb.io
+    # get number of available teams
     teams_url = "https://api.vexdb.io/v1/get_teams"
-    print "Getting VRC teams data from: " + teams_url
-    resp = requests.get(teams_url, {"program": "VRC"})
-
-    # check request succeeded
-    if resp.status_code != 200:
-        print "Got status code %d when getting team data!"
-        return
-
-    # parse JSON data from request
-    resp_data = resp.json()
-    num_teams = int(resp_data["size"])
+    resp = requests.get(teams_url, {"nodata": "true", "program": "VRC"})
+    num_teams = int(resp.json()["size"])
     print "Found %d teams." % num_teams
 
-    # prepare data and add to database
-    team_data = [
-        (
-             team["number"],
-             team["team_name"],
-             team["robot_name"],
-             team["organisation"],
-             team["city"],
-             team["country"],
-             team["region"],
-             team["grade"]
-        )
-        for team in resp_data["result"]
-    ]
+    # get teams 1,000 entries at a time (VexDB tends to limit at around 5,000)
+    teamnum = 0
+    while teamnum < num_teams:
+        # get team data (VEX Robotics Competition only) from vexdb.io
+        print "Getting VRC teams data from: " + teams_url
+        resp = requests.get(teams_url, {"program": "VRC", "limit_start": teamnum, "limit_number": 1000})
 
-    conn.executemany("INSERT OR REPLACE INTO data_teams VALUES (?, ?, ?, ?, ?, ?, ?, ?);", team_data)
+        # parse JSON data from request
+        resp_data = resp.json()
+        print "Found %d teams." % num_teams
+
+        # prepare data and add to database
+        team_data = [
+            (
+                 team["number"],
+                 team["team_name"],
+                 team["robot_name"],
+                 team["organisation"],
+                 team["city"],
+                 team["country"],
+                 team["region"],
+                 team["grade"]
+            )
+            for team in resp_data["result"]
+        ]
+
+        conn.executemany("INSERT OR REPLACE INTO data_teams VALUES (?, ?, ?, ?, ?, ?, ?, ?);", team_data)
+        teamnum += resp_data["size"]
+
     conn.commit()
 
 
